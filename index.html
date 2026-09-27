@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>重症插管導航</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1F0; --surface:#FFFFFF; --surface-2:#F5F8F7; --ink:#14212A; --muted:#55666D; --line:#D2DBDA;
+  --accent:#0B6E69; --accent-ink:#FFFFFF; --accent-soft:#DCEEEC;
+  --ok:#2A7549; --ok-soft:#E0F0E6; --warn:#9A5700; --warn-soft:#FAEBD3; --crit:#B42318; --crit-soft:#FBE2DE;
+  --strip:#12202A; --strip-ink:#E6EEF0; --strip-muted:#93A7AF; --strip-line:#2B3D47; --strip-accent:#43C4B8;
+  --pa:#2E7D4F; --pb:#B86E00; --pc:#C2410C; --pd:#B42318;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-label:"IBM Plex Sans Condensed","Noto Sans TC","Arial Narrow",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0B1114; --surface:#131C20; --surface-2:#182328; --ink:#E2EAEC; --muted:#93A4AA; --line:#26353B;
+    --accent:#3CBDB2; --accent-ink:#06201E; --accent-soft:#12332F;
+    --ok:#5CC48E; --ok-soft:#12301F; --warn:#F0AA45; --warn-soft:#352409; --crit:#F2685F; --crit-soft:#3A1512;
+    --strip:#070D10; --strip-ink:#E2EAEC; --strip-muted:#8397A0; --strip-line:#223139; --strip-accent:#43C4B8;
+    --pa:#5CC48E; --pb:#F0AA45; --pc:#F97316; --pd:#F2685F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0B1114; --surface:#131C20; --surface-2:#182328; --ink:#E2EAEC; --muted:#93A4AA; --line:#26353B;
+  --accent:#3CBDB2; --accent-ink:#06201E; --accent-soft:#12332F;
+  --ok:#5CC48E; --ok-soft:#12301F; --warn:#F0AA45; --warn-soft:#352409; --crit:#F2685F; --crit-soft:#3A1512;
+  --strip:#070D10; --strip-ink:#E2EAEC; --strip-muted:#8397A0; --strip-line:#223139; --strip-accent:#43C4B8;
+  --pa:#5CC48E; --pb:#F0AA45; --pc:#F97316; --pd:#F2685F;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.3}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px}
+.label{font-family:var(--f-label);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.strip{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--strip);color:var(--strip-ink);border-bottom:1px solid var(--strip-line)}
+.top{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding-block:10px}
+.brand h1{font-family:var(--f-label);font-size:20px;font-weight:700}
+.brand p{font-size:12px;color:var(--strip-muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--strip-line);border-radius:999px;padding:2px 10px;font-size:13px}
+.chip b{font-family:var(--f-num)}
+.chip.crit{border-color:#F2685F;color:#FFB4AE}.chip.warn{border-color:#F0AA45;color:#FFD9A0}.chip.ok{border-color:#5CC48E;color:#B6EBCD}
+.nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px}
+.nav a{color:var(--strip-ink);text-decoration:none;font-size:13.5px;padding:4px 10px;border:1px solid var(--strip-line);border-radius:999px;white-space:nowrap}
+.nav a:hover{border-color:var(--strip-accent)}
+main{padding-block:18px 48px;display:grid;gap:18px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}}
+.col{display:grid;gap:16px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;min-width:0;scroll-margin-top:130px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sec h2{font-size:18px;font-weight:700;display:flex;gap:10px;align-items:center}
+.sec h2 .n{font-family:var(--f-num);font-size:13px;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:var(--ink);color:var(--surface)}
+.sec span{font-size:12px;color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.danger{border-color:var(--crit);color:var(--crit)}
+.btn.okb{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.btn.failb{background:var(--crit);border-color:var(--crit);color:var(--surface)}
+.toast{font-size:13px;color:var(--ok)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.muted{color:var(--muted);font-size:13px}
+.sub{font-family:var(--f-label);font-size:12.5px;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase}
+.fld{display:grid;gap:3px;min-width:0}
+.fld label{font-size:12.5px;color:var(--muted)}
+.fld input,.fld select{width:100%;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 9px;font-family:var(--f-num)}
+.fld select{font-family:var(--f-body)}
+.unit{font-size:10.5px;color:var(--muted);font-family:var(--f-num)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.kvs{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:14px;border-top:1px dashed var(--line);padding-top:10px}
+.kvs b{font-family:var(--f-num)}
+.verdict{border-radius:12px;padding:12px 16px;display:grid;gap:4px}
+.verdict.crit{background:var(--crit-soft)}.verdict.ok{background:var(--ok-soft)}.verdict.none{background:var(--surface-2);border:1px solid var(--line)}.verdict.warn{background:var(--warn-soft)}
+.verdict b{font-size:16.5px}
+.verdict span{font-size:14px}
+.cks{display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.ck{display:flex;gap:9px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:14.5px}
+.ck:hover{background:var(--surface-2)}
+.ck input{margin-top:4px;width:17px;height:17px;accent-color:var(--accent);flex:none}
+.ck small{display:block;color:var(--muted);font-size:12.5px}
+.ck:has(input:checked){background:var(--ok-soft)}
+.ck.risk input{accent-color:var(--crit)}
+.ck.risk:has(input:checked){background:var(--crit-soft)}
+.ck .pts{margin-left:auto;font-family:var(--f-num);font-size:12.5px;color:var(--muted)}
+.clgrp{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.clgrp>header{display:flex;justify-content:space-between;padding:8px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.clgrp>header h3{font-size:15px;font-weight:700}
+.clgrp>header span{font-family:var(--f-num);font-size:13px;color:var(--muted)}
+.clgrp .ck{border-radius:0;border-top:1px solid var(--line)}
+.clgrp>header+.cks .ck{border-top:0}
+.clgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.clgrid .cks{grid-template-columns:1fr}
+/* drugs */
+.dgrp{display:grid;gap:8px}
+.drug{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2);align-items:baseline}
+.drug.pick{border-color:var(--accent);background:var(--accent-soft)}
+.drug.no{opacity:.55}
+.drug .nm{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center}
+.drug .nm input{accent-color:var(--accent);width:16px;height:16px}
+.drug .dose{font-family:var(--f-num);font-weight:700;font-size:19px;color:var(--accent);text-align:right}
+.drug .dose small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted)}
+.drug .how{grid-column:1/-1;font-size:13px;color:var(--muted)}
+.drug .how b{color:var(--crit)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;justify-self:start;flex-wrap:wrap}
+.seg button{border:0;background:var(--surface);padding:5px 12px;cursor:pointer;font-size:14px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+/* plans */
+.plans{display:grid;gap:10px}
+.plan{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.plan .pl{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;font-family:var(--f-label);font-weight:700;font-size:22px;color:#fff;opacity:.45}
+.plan.A .pl{background:var(--pa)}.plan.B .pl{background:var(--pb)}.plan.C .pl{background:var(--pc)}.plan.D .pl{background:var(--pd)}
+.plan.cur{box-shadow:0 0 0 2px var(--accent)}
+.plan.cur .pl,.plan.done .pl{opacity:1}
+.plan.done{background:var(--ok-soft);border-color:transparent}
+.plan.D.cur{box-shadow:0 0 0 3px var(--crit);background:var(--crit-soft)}
+.plan h3{font-size:16px;font-weight:700;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.plan h3 small{font-size:12.5px;font-weight:500;color:var(--muted)}
+.plan ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px;font-size:14px}
+.plan .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.att{display:inline-flex;gap:4px}
+.att i{width:14px;height:14px;border-radius:50%;border:2px solid var(--line)}
+.att i.f{background:var(--crit);border-color:var(--crit)}
+.att i.x{border-style:dashed}
+.log{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto;font-size:13.5px;display:grid;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.log li{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:5px 10px;border-bottom:1px solid var(--line)}
+.log li:last-child{border-bottom:0}
+.log .t{font-family:var(--f-num);font-weight:700}
+.side{display:grid;gap:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 110px)}
+@media (max-width:1000px){.side{position:static}}
+.side h2{font-size:16px;font-weight:700}
+.sum{display:grid;gap:5px;font-size:14px}
+textarea.buf{width:100%;height:130px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:8px;font-family:var(--f-num);font-size:12.5px}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--crit);flex-wrap:wrap}
+.rec{display:grid;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.rec div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.rec div:first-child{border-top:0}
+.rec small{font-family:var(--f-label);font-size:11.5px;color:var(--muted);white-space:nowrap}
+footer{border-top:1px solid var(--line);padding-top:16px;display:grid;gap:10px;font-size:13px;color:var(--muted)}
+footer ol{margin:0;padding-left:20px;display:grid;gap:3px}
+.disclaimer{background:var(--warn-soft);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:13.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="strip">
+  <div class="wrap top">
+    <div class="brand"><h1>重症插管導航</h1><p>DAS 2018 重症插管 · SCCM 2023 RSI</p></div>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div class="wrap"><nav class="nav"><a href="#s1">1 評估</a><a href="#s2">2 檢核表</a><a href="#s3">3 RSI 藥物</a><a href="#s4">4 Plan A–D</a><a href="#s5">5 插管後</a></nav></div>
+</header>
+
+<div class="wrap">
+<main>
+  <div class="layout"><div class="col" id="main"></div><aside class="side" id="side"></aside></div>
+  <footer>
+    <div class="disclaimer"><b>僅供插管流程輔助與教學，不取代臨床判斷與團隊領導。</b>藥物劑量請依院內規範並經藥師確認；困難氣道時儘早求援。資料只存在這台裝置的瀏覽器，不會上傳；請只記錄床號。</div>
+    <div>
+      <span class="label">依據</span>
+      <ol>
+        <li>Higgs A, McGrath BA, Goddard C, et al. Guidelines for the management of tracheal intubation in critically ill adults (DAS/ICS/FICM/RCoA). <i>Br J Anaesth</i> 2018;120:323–352。</li>
+        <li>Acquisto NM, Mosier JM, Bittner EA, et al. Society of Critical Care Medicine clinical practice guidelines for rapid sequence intubation in the critically ill adult patient. <i>Crit Care Med</i> 2023;51:1411–1430. <a href="https://doi.org/10.1097/CCM.0000000000006000">doi:10.1097/CCM.0000000000006000</a></li>
+        <li>De Jong A, et al. MACOCHA score. <i>Am J Respir Crit Care Med</i> 2013;187:832–839。</li>
+        <li>Casey JD, et al. Bag-mask ventilation during tracheal intubation (PreVent). <i>N Engl J Med</i> 2019;380:811–821；Prekker ME, et al. Video versus direct laryngoscopy (DEVICE). <i>N Engl J Med</i> 2023;389:418–429；Gibbs KW, et al. Noninvasive ventilation for preoxygenation (PREOXI). <i>N Engl J Med</i> 2024;390:2165–2177。</li>
+        <li>Janmahasatian S, et al. Lean body weight. <i>Clin Pharmacokinet</i> 2005;44:1051–1065。</li>
+      </ol>
+    </div>
+  </footer>
+</main>
+</div>
+
+<script>
+(function(){
+const KEY='intub-v1';
+const pad=x=>String(x).padStart(2,'0');
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n=v=>{if(v===''||v==null)return NaN;const x=parseFloat(v);return isFinite(x)?x:NaN;};
+const clock=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());};
+const fmt=x=>!isFinite(x)?'—':x>=100?String(Math.round(x)):String(Math.round(x*10)/10);
+const newEv=()=>({bed:'',v:{sex:'M'},c:{},mac:{},pick:{ind:'ket',nmb:'roc'},plan:{a:0,aExp:false,b:0,state:'A',done:null},log:[],note:''});
+let E;
+try{E=Object.assign(newEv(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){E=newEv();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(E));}catch(e){}}
+function log(t){E.log.push({t:Date.now(),text:t});}
+
+/* ---------- 評估 ---------- */
+const MAC=[['mall','Mallampati III 或 IV',5],['osa','阻塞性睡眠呼吸中止',2],['cspine','頸椎活動受限',1],['mouth','張口 <3 cm',1],['coma','昏迷',1],['hypox','嚴重低血氧（SpO₂ <80%）',1],['nonana','操作者非麻醉科醫師',1]];
+function weights(){
+  const w=n(E.v.wt),h=n(E.v.ht),m=E.v.sex==='M';
+  const ibw=h>0?(m?50:45.5)+0.91*(h-152.4):NaN;
+  const bmi=w>0&&h>0?w/((h/100)**2):NaN;
+  const lbw=w>0&&isFinite(bmi)?(m?9270*w/(6680+216*bmi):9270*w/(8780+244*bmi)):NaN;
+  return {w,h,ibw,bmi,lbw,obese:bmi>=30};
+}
+function macScore(){return MAC.reduce((a,[k,,p])=>a+(E.mac[k]?p:0),0);}
+function shockIdx(){const hr=n(E.v.hr),sbp=n(E.v.sbp);return hr>0&&sbp>0?hr/sbp:NaN;}
+const SUX_CI=[['k','高血鉀或疑似（K >5.5）'],['burn','燒燙傷、擠壓傷或去神經化超過 24–72 小時'],['immob','長期臥床或 ICU 後天性肌無力'],['nmd','神經肌肉疾病（肌病、ALS、GBS 等）'],['mh','惡性高熱病史或家族史'],['pche','假性膽鹼酯酶缺乏']];
+function suxCI(){return SUX_CI.some(([k])=>E.c['sx_'+k])||n(E.v.k)>5.5;}
+
+/* ---------- 藥物 ---------- */
+function drugs(){
+  const W=weights(),si=shockIdx(),shock=E.c.shock||si>=0.9;
+  const dw=W.obese&&isFinite(W.lbw)?W.lbw:W.w; // 誘導劑：肥胖用瘦體重
+  const rw=W.obese&&isFinite(W.ibw)?W.ibw:W.w; // rocuronium：肥胖用理想體重
+  const tw=W.w;
+  const r=(a,b,x)=>isFinite(x)&&x>0?(b?`${fmt(a*x)}–${fmt(b*x)} mg`:`${fmt(a*x)} mg`):'輸入體重';
+  const IND=[
+   {k:'ket',nm:'Ketamine',d:shock?r(0.5,1,dw):r(1,2,dw),s:shock?'休克：0.5–1 mg/kg':'1–2 mg/kg',how:'血行動力學較穩定；兒茶酚胺耗竭者仍可能低血壓。'},
+   {k:'eto',nm:'Etomidate',d:shock?r(0.15,0.2,dw):r(0.3,0,dw),s:shock?'休克：0.15–0.2 mg/kg':'0.3 mg/kg',how:'SCCM 2023：與其他誘導劑相比，死亡率、低血壓或升壓劑使用沒有差異（條件式，中度證據）。'},
+   {k:'pro',nm:'Propofol',d:shock?r(0.5,1,dw):r(1,2,dw),s:shock?'休克：0.5–1 mg/kg，盡量避免':'1–2 mg/kg',how:shock?'<b>休克時低血壓風險高</b>，建議改用 ketamine 或 etomidate。':'低血壓常見；支氣管擴張作用。'},
+   {k:'mdz',nm:'Midazolam',d:r(0.1,0.3,dw),s:'0.1–0.3 mg/kg',how:'起效較慢，較少單獨用於 RSI。'}];
+  const sx=suxCI();
+  const NMB=[
+   {k:'roc',nm:'Rocuronium',d:r(1,1.2,rw),s:'1–1.2 mg/kg',how:'起效約 60 秒，作用 45–60 分鐘以上；可用 sugammadex 立即逆轉。'},
+   {k:'sux',nm:'Succinylcholine',d:r(1,1.5,tw),s:'1–1.5 mg/kg（實際體重）',how:sx?'<b>有禁忌症：不要使用。</b>':'起效 45–60 秒，作用 8–10 分鐘；注意高血鉀與心搏過緩。',no:sx}];
+  const PRE=[
+   {nm:'Fentanyl（選用）',d:isFinite(tw)&&tw>0?`${fmt(tw)}–${fmt(3*tw)} µg`:'輸入體重',s:'1–3 µg/kg，插管前 3 分鐘',how:'減少交感反應；休克或低血壓時避免。'},
+   {nm:'Phenylephrine 推注',d:'50–200 µg',s:'每 1–2 分鐘可重複',how:'插管後低血壓的即時處理；同時準備 norepinephrine 輸注。'},
+   {nm:'Epinephrine 推注',d:'10–20 µg',s:'稀釋成 10 µg/mL',how:'嚴重低血壓或心搏過緩時使用。'},
+   {nm:'Sugammadex（逆轉 rocuronium）',d:r(16,0,tw),s:'立即逆轉：16 mg/kg（實際體重）',how:'只有在能改善氧合時才有幫助；不能取代 Plan B–D。'}];
+  return {IND,NMB,PRE,W,dw,rw,shock,sx};
+}
+
+/* ---------- Plan A–D ---------- */
+function planState(){return E.plan.state;}
+function planHTML(){
+  const P=E.plan,st=P.state;
+  const dots=(used,max,extra)=>`<span class="att">${Array.from({length:max},(_,i)=>`<i class="${i<used?'f':''}"></i>`).join('')}${extra!=null?`<i class="x ${extra?'f':''}" title="資深者"></i>`:''}</span>`;
+  const done=P.done;
+  let top=done?`<div class="verdict ${done==='D'?'warn':'ok'}"><b>${{A:'插管成功（Plan A）',B:'SGA 維持氧合（Plan B）',C:'面罩通氣維持氧合（Plan C）',D:'已完成緊急頸前氣道（Plan D）'}[done]}</b><span>${done==='A'?'以波形 ETCO₂ 確認位置，進入插管後照護。':done==='D'?'確認 ETCO₂，儘快轉為確定性氣道並聯絡耳鼻喉或外科。':'停下來思考：喚醒病人（ICU 中少見）、經 SGA 以纖維支氣管鏡插管、或準備頸前氣道。'}</span></div>`:'';
+  return `${top}<div class="plans">
+    <div class="plan A ${st==='A'&&!done?'cur':''} ${done==='A'?'done':''}"><div class="pl">A</div><div><h3>面罩通氣與氣管插管 <small>最多 3 次，另可由資深者再試 1 次（3＋1）</small></h3>
+      <ul><li>最佳化姿勢與前給氧；插管期間以鼻導管或 HFNC 維持氧合（apnoeic oxygenation）。</li><li>第一次就用影像喉頭鏡（DEVICE 試驗：提高第一次成功率），備好 bougie 或管芯。</li><li>每次嘗試後都要更換做法（姿勢、器材、操作者）；第一次失敗就求援。</li><li>波形 ETCO₂ 確認：「沒有波形就是位置錯誤」。</li></ul>
+      ${st==='A'&&!done?(P.a<3?`<div class="acts">${dots(P.a,3,null)}<span class="muted">第 ${P.a+1} 次</span><button type="button" class="btn small okb" data-pl="aok">插管成功</button><button type="button" class="btn small failb" data-pl="afail">這次失敗</button><button type="button" class="btn small" data-pl="toB">直接宣告失敗，進入 Plan B</button></div>`:`<div class="acts">${dots(3,3,false)}<span class="muted">已失敗 3 次：資深者第 4 次嘗試</span><button type="button" class="btn small okb" data-pl="eok">資深者成功</button><button type="button" class="btn small failb" data-pl="efail">資深者也失敗</button><button type="button" class="btn small" data-pl="toB">不再嘗試，進入 Plan B</button></div>`):''}</div></div>
+    <div class="plan B ${st==='B'&&!done?'cur':''} ${done==='B'?'done':''}"><div class="pl">B</div><div><h3>以聲門上呼吸道（SGA）維持氧合 <small>第二代 SGA，最多 3 次</small></h3>
+      <ul><li>宣告插管失敗，改以第二代 SGA 維持氧合。</li><li>成功：停下來思考下一步（喚醒、經 SGA 插管、或頸前氣道）。</li></ul>
+      ${st==='B'&&!done?`<div class="acts">${dots(P.b,3)}<button type="button" class="btn small okb" data-pl="bok">氧合可維持</button><button type="button" class="btn small failb" data-pl="bfail">這次失敗</button></div>`:''}</div></div>
+    <div class="plan C ${st==='C'&&!done?'cur':''} ${done==='C'?'done':''}"><div class="pl">C</div><div><h3>最後嘗試面罩通氣 <small>雙人雙手、口咽或鼻咽呼吸道</small></h3>
+      <ul><li>確保已完全肌肉鬆弛。</li><li>成功：維持氧合並停下來思考；失敗：宣告 CICO。</li></ul>
+      ${st==='C'&&!done?`<div class="acts"><button type="button" class="btn small okb" data-pl="cok">氧合可維持</button><button type="button" class="btn small failb" data-pl="cfail">無法插管、無法給氧（CICO）</button></div>`:''}</div></div>
+    <div class="plan D ${st==='D'&&!done?'cur':''} ${done==='D'?'done':''}"><div class="pl">D</div><div><h3>緊急頸前氣道（FONA） <small>宣告 CICO 後立即執行</small></h3>
+      <ul><li>大聲宣告「無法插管、無法給氧」；確認完全肌肉鬆弛。</li><li>頸部伸展，辨識環甲膜；Scalpel–bougie–tube：10 號刀片橫切、刀片轉 90°、沿刀片放 bougie、套入 6.0 cuffed 氣管內管。</li><li>摸不到環甲膜時：垂直切開皮膚 8–10 cm，鈍性分離後再依上述步驟。</li><li>以 ETCO₂ 確認並固定。</li></ul>
+      ${st==='D'&&!done?`<div class="acts"><button type="button" class="btn small okb" data-pl="dok">頸前氣道完成</button></div>`:''}</div></div>
+  </div>
+  <div class="row" style="align-items:center"><button type="button" class="btn small" data-pl="reset">重設 Plan A–D</button><span class="muted">每個步驟都會記錄時間</span></div>`;
+}
+
+/* ---------- 渲染 ---------- */
+function render(){
+  const a=document.activeElement;let fk=null,sel=null;
+  if(a&&a.id){fk='#'+CSS.escape(a.id);try{sel=[a.selectionStart,a.selectionEnd];}catch(e){}}
+  const D=drugs(),W=D.W,mac=macScore(),si=shockIdx();
+  const macHi=mac>=3,siHi=si>=0.9,spo2=n(E.v.spo2);
+  $('#chips').innerHTML=`<span class="chip ${macHi?'crit':'ok'}">MACOCHA <b>${mac}</b></span><span class="chip ${siHi?'crit':isFinite(si)?'ok':''}">休克指數 <b>${isFinite(si)?si.toFixed(2):'—'}</b></span>${D.sx?'<span class="chip crit">Succinylcholine 禁忌</span>':''}<span class="chip">Plan <b>${E.plan.done?E.plan.done+' 完成':E.plan.state}</b></span>`;
+  const f=(k,l,u,ph)=>`<div class="fld"><label for="v-${k}">${l}${u?` <span class="unit">${u}</span>`:''}</label><input id="v-${k}" data-v="${k}" inputmode="decimal" value="${esc(E.v[k]??'')}" placeholder="${ph||''}"></div>`;
+  const ck=(k,l,sub,cls)=>`<label class="ck ${cls||''}" for="c-${k}"><input type="checkbox" id="c-${k}" data-c="${k}" ${E.c[k]?'checked':''}><span>${l}${sub?`<small>${sub}</small>`:''}</span></label>`;
+  let h=`<section class="panel" id="s1"><div class="sec"><h2><span class="n">1</span>插管前評估</h2><span>困難氣道與生理性困難氣道</span></div>
+    <div class="grid"><div class="fld"><label for="v-bed">床號</label><input id="v-bed" data-v="bed" value="${esc(E.v.bed??'')}"></div>${f('wt','體重','kg')}${f('ht','身高','cm')}
+      <div class="fld"><label for="v-sex">性別</label><select id="v-sex" data-sel="sex"><option value="M" ${E.v.sex==='M'?'selected':''}>男</option><option value="F" ${E.v.sex==='F'?'selected':''}>女</option></select></div>
+      ${f('hr','心率','次/分')}${f('sbp','收縮壓','mmHg')}${f('spo2','SpO₂','%')}${f('pf','PaO₂/FiO₂','')}${f('k','K','mmol/L')}</div>
+    <div class="kvs"><span>理想體重 <b>${fmt(W.ibw)}</b> kg</span><span>瘦體重 <b>${fmt(W.lbw)}</b> kg</span><span>BMI <b>${fmt(W.bmi)}</b></span><span>休克指數 <b>${isFinite(si)?si.toFixed(2):'—'}</b></span></div>
+    <div class="cks">${ck('shock','休克或需要升壓劑','','risk')}${ck('acidosis','嚴重代謝性酸中毒','插管後不要降低分鐘通氣量','risk')}${ck('rvf','右心衰竭或肺高壓','','risk')}</div>
+    <span class="sub">MACOCHA 分數（ICU 困難插管預測）</span>
+    <div class="cks">${MAC.map(([k,l,p])=>`<label class="ck risk" for="m-${k}"><input type="checkbox" id="m-${k}" data-mac="${k}" ${E.mac[k]?'checked':''}><span>${l}</span><span class="pts">+${p}</span></label>`).join('')}</div>
+    <div class="verdict ${macHi||siHi||spo2<90||n(E.v.pf)<150?'warn':'none'}"><b>${macHi?`MACOCHA ${mac} 分（≥3）：預期困難插管`:`MACOCHA ${mac} 分`}</b><span>${[macHi?'請最有經驗者操作、第一次就用影像喉頭鏡、備妥 SGA 與 FONA 器材並先說明 Plan A–D。':'',siHi||E.c.shock?'休克指數 ≥0.9 或休克：插管後低血壓風險高，先準備升壓劑並減少誘導劑劑量。':'',n(E.v.pf)<150?'PaO₂/FiO₂ <150：以 NIV 前給氧（SCCM 2023；PREOXI 試驗）。':'',E.c.acidosis?'嚴重酸中毒：縮短無呼吸時間，插管後設定足夠的分鐘通氣量。':''].filter(Boolean).join('<br>')||'無明顯困難氣道或生理性危險因子；仍需依檢核表準備。'}</span></div></section>`;
+
+  const CL=[
+   {h:'病人',items:[['p_iv','兩條可靠的靜脈管路'],['p_pos','最佳姿勢：抬高頭部或斜坡姿勢'],['p_preox','前給氧 3 分鐘以上','低血氧（P/F <150）用 NIV；預期困難喉鏡用 HFNO（SCCM 2023）'],['p_apnoeic','插管期間持續鼻導管或 HFNC 給氧'],['p_hemo','血行動力學最佳化；升壓劑已接上或備妥'],['p_ng','有鼻胃管者先抽吸'],['p_allergy','確認過敏史與 K 值']]},
+   {h:'器材',items:[['e_suction','抽吸已開並測試'],['e_bvm','BVM 接氧氣與 PEEP 閥'],['e_vl','影像喉頭鏡與直接喉頭鏡、葉片'],['e_ett','兩種尺寸氣管內管，已測試氣囊'],['e_bougie','Bougie 與管芯'],['e_sga','第二代 SGA'],['e_fona','FONA 套組：10 號刀片、bougie、6.0 cuffed 管'],['e_etco2','波形 ETCO₂'],['e_mon','監測：SpO₂、心電圖、血壓每 2–3 分鐘']]},
+   {h:'藥物',items:[['d_ind','誘導劑（見下方劑量）'],['d_nmb','肌肉鬆弛劑'],['d_press','推注用升壓劑與 norepinephrine'],['d_post','插管後鎮痛與鎮靜'],['d_sgx','Sugammadex 可取得']]},
+   {h:'團隊',items:[['t_roles','分工：插管者、呼吸道助手、給藥、監測、領導者'],['t_plan','大聲說明 Plan A–D 與失敗時的做法'],['t_help','確認求援對象（資深醫師、麻醉科、耳鼻喉科）'],['t_ready','有沒有人有疑慮？']]}];
+  const clDone=CL.reduce((x,g)=>x+g.items.filter(([k])=>E.c[k]).length,0),clAll=CL.reduce((x,g)=>x+g.items.length,0);
+  h+=`<section class="panel" id="s2"><div class="sec"><h2><span class="n">2</span>插管前檢核表</h2><span>DAS 2018 重症插管檢核表精神；${clDone}/${clAll}</span></div>
+    <div class="clgrid">${CL.map(g=>{const d=g.items.filter(([k])=>E.c[k]).length;return `<section class="clgrp"><header><h3>${g.h}</h3><span>${d}/${g.items.length}</span></header><div class="cks">${g.items.map(([k,l,s])=>ck(k,l,s)).join('')}</div></section>`;}).join('')}</div>
+    <div class="row" style="align-items:center"><button type="button" class="btn small" data-act="clAll">全部標為完成</button><button type="button" class="btn small" data-act="clNone">清除勾選</button></div></section>`;
+
+  const card=(d,grp)=>`<div class="drug ${E.pick[grp]===d.k?'pick':''} ${d.no?'no':''}"><label class="nm"><input type="radio" name="${grp}" value="${d.k}" data-pick="${grp}" ${E.pick[grp]===d.k?'checked':''} ${d.no?'disabled':''}>${d.nm}</label><span class="dose">${d.d}<small>${d.s}</small></span><div class="how">${d.how}</div></div>`;
+  h+=`<section class="panel" id="s3"><div class="sec"><h2><span class="n">3</span>RSI 藥物劑量</h2><span>${W.obese?`BMI ≥30：誘導劑以瘦體重 ${fmt(W.lbw)} kg、rocuronium 以理想體重 ${fmt(W.ibw)} kg、succinylcholine 以實際體重計算`:'以實際體重計算'}${D.shock?'；休克劑量':''}</span></div>
+    <div class="note verdict none"><span>SCCM 2023：使用鎮靜誘導劑插管時，<b>要合併肌肉鬆弛劑</b>（強建議，低證據）；沒有 succinylcholine 禁忌時，rocuronium 或 succinylcholine 皆可（條件式，低證據）。</span></div>
+    <span class="sub">誘導劑</span><div class="dgrp">${D.IND.map(d=>card(d,'ind')).join('')}</div>
+    <span class="sub">肌肉鬆弛劑</span><div class="dgrp">${D.NMB.map(d=>card(d,'nmb')).join('')}</div>
+    <span class="sub">Succinylcholine 禁忌症</span><div class="cks">${SUX_CI.map(([k,l])=>ck('sx_'+k,l,'','risk')).join('')}</div>
+    <span class="sub">其他</span><div class="dgrp">${D.PRE.map(d=>`<div class="drug"><span class="nm">${d.nm}</span><span class="dose">${d.d}<small>${d.s}</small></span><div class="how">${d.how}</div></div>`).join('')}</div></section>`;
+
+  h+=`<section class="panel" id="s4"><div class="sec"><h2><span class="n">4</span>困難氣道流程 Plan A–D</h2><span>DAS 2018 重症插管</span></div>${planHTML()}</section>`;
+
+  h+=`<section class="panel" id="s5"><div class="sec"><h2><span class="n">5</span>插管後照護</h2><span></span></div>
+    <div class="cks">${[['a_etco2','波形 ETCO₂ 持續確認位置'],['a_cxr','胸部 X 光確認管位'],['a_vent','呼吸器設定：肺保護性通氣；酸中毒者維持足夠分鐘通氣量'],['a_sed','插管後鎮痛與鎮靜：先止痛，避免肌肉鬆弛時清醒'],['a_bp','監測插管後低血壓並處理'],['a_cuff','氣囊壓力 20–30 cmH₂O'],['a_doc','記錄插管次數、器材、困難程度與並發症；困難氣道需告知並標示']].map(([k,l])=>ck(k,l,'')).join('')}</div>
+    <span class="sub">SCCM 2023 RSI 指引建議</span>
+    <div class="rec">${[['使用鎮靜誘導劑時合併肌肉鬆弛劑','強建議，低證據'],['Etomidate 與其他誘導劑在死亡率、低血壓、升壓劑使用上沒有差異','條件式，中度證據'],['沒有禁忌時，rocuronium 或 succinylcholine 皆可','條件式，低證據'],['預期喉鏡困難時以 HFNO 前給氧','條件式，低證據'],['嚴重低血氧（P/F <150）以 NIPPV 前給氧','條件式，低證據'],['躁動無法配合前給氧者，可用藥物輔助前給氧（如 ketamine）','條件式，極低證據']].map(([t,s])=>`<div><span>${t}</span><small>${s}</small></div>`).join('')}</div>
+    <p class="muted">SCCM 2023 共 10 個臨床問題；此處列出可取得的建議，其餘請參閱原文。</p>
+    <label class="label" for="note">備註</label><textarea id="note" data-note style="width:100%;min-height:60px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:8px">${esc(E.note)}</textarea></section>`;
+  $('#main').innerHTML=h;
+
+  const ind=D.IND.find(x=>x.k===E.pick.ind),nmb=D.NMB.find(x=>x.k===E.pick.nmb&&!x.no)||D.NMB[0];
+  $('#side').innerHTML=`<section class="panel"><h2>插管計畫${E.v.bed?' · 床 '+esc(E.v.bed):''}</h2><div class="sum">
+      <div>MACOCHA ${mac}${macHi?'（預期困難）':''}；休克指數 ${isFinite(si)?si.toFixed(2):'—'}</div>
+      <div>檢核表 ${clDone}/${clAll}</div>
+      <div>誘導：<b>${ind.nm}</b> ${ind.d}</div>
+      <div>肌鬆：<b>${nmb.nm}</b> ${nmb.d}</div>
+      <div>目前：${E.plan.done?'Plan '+E.plan.done+' 完成':'Plan '+E.plan.state}</div></div>
+      <div class="row" style="align-items:center"><button type="button" class="btn small" data-act="copy">複製摘要</button><span class="toast" id="toast" aria-live="polite"></span></div>
+      <textarea class="buf" id="buf" hidden readonly aria-label="摘要"></textarea></section>
+    <section class="panel"><h2>時間紀錄</h2><ul class="log">${E.log.length?E.log.slice().reverse().map(x=>`<li><span class="t">${clock(x.t)}</span><span>${esc(x.text)}</span></li>`).join(''):'<li><span></span><span class="muted">Plan A–D 的每個步驟會記錄在這裡</span></li>'}</ul>
+      <div class="row" style="align-items:center"><button type="button" class="btn small danger" data-act="newAsk">新的插管</button><span class="confirm" id="newc" hidden>清除全部資料？<button type="button" class="btn small danger" data-act="newYes">清除</button><button type="button" class="btn small" data-act="newNo">取消</button></span></div></section>`;
+  const el=fk&&$(fk);if(el){el.focus({preventScroll:true});if(sel&&sel[0]!=null)try{el.setSelectionRange(sel[0],sel[1]);}catch(e){}}
+}
+function summary(){
+  const D=drugs(),mac=macScore(),si=shockIdx();
+  const ind=D.IND.find(x=>x.k===E.pick.ind),nmb=D.NMB.find(x=>x.k===E.pick.nmb&&!x.no)||D.NMB[0];
+  const L=[`【插管紀錄】${E.v.bed?'床 '+E.v.bed+'　':''}${E.v.wt?E.v.wt+' kg':''}`,`MACOCHA ${mac}；休克指數 ${isFinite(si)?si.toFixed(2):'—'}${E.c.shock?'；休克':''}`,`誘導：${ind.nm} ${ind.d}；肌鬆：${nmb.nm} ${nmb.d}`];
+  E.log.forEach(x=>L.push(`${clock(x.t)} ${x.text}`));
+  if(E.note)L.push('備註：'+E.note);
+  return L.join('\n');
+}
+document.addEventListener('click',e=>{
+  const p=e.target.closest('[data-pl]');
+  if(p){const P=E.plan;
+    switch(p.dataset.pl){
+      case 'aok':P.done='A';log(`Plan A：第 ${P.a+1} 次插管成功`);break;
+      case 'afail':if(P.a>=3)return;P.a++;
+        log(P.a===1?'Plan A：第 1 次失敗，求援並更換做法':P.a<3?`Plan A：第 ${P.a} 次失敗，更換做法`:'Plan A：3 次失敗；可由資深者再試 1 次（3＋1），否則進入 Plan B');break;
+      case 'eok':P.aExp=true;P.done='A';log('Plan A：資深者第 4 次插管成功');break;
+      case 'efail':P.aExp=true;P.state='B';log('Plan A：資深者也失敗 → 宣告插管失敗，進入 Plan B：SGA');break;
+      case 'toB':P.state='B';log('宣告插管失敗 → Plan B：SGA');break;
+      case 'bok':P.done='B';log(`Plan B：SGA 第 ${P.b+1} 次，氧合可維持`);break;
+      case 'bfail':P.b++;log(`Plan B：SGA 第 ${P.b} 次失敗`);if(P.b>=3){P.state='C';log('SGA 失敗 → Plan C：面罩通氣');}break;
+      case 'cok':P.done='C';log('Plan C：面罩通氣可維持氧合');break;
+      case 'cfail':P.state='D';log('宣告 CICO → Plan D：緊急頸前氣道');break;
+      case 'dok':P.done='D';log('Plan D：頸前氣道完成');break;
+      case 'reset':E.plan={a:0,aExp:false,b:0,state:'A',done:null};log('重設 Plan A–D');break;
+    }
+    save();render();return;}
+  const a=e.target.closest('[data-act]');if(!a)return;
+  switch(a.dataset.act){
+    case 'clAll':$$('#s2 input[data-c]').forEach(i=>E.c[i.dataset.c]=true);break;
+    case 'clNone':$$('#s2 input[data-c]').forEach(i=>E.c[i.dataset.c]=false);break;
+    case 'copy':{const text=summary(),toast=$('#toast'),buf=$('#buf');
+      const ok=()=>{toast.textContent='已複製';setTimeout(()=>{const t=$('#toast');if(t)t.textContent='';},2000);};
+      const fail=()=>{buf.value=text;buf.hidden=false;buf.select();toast.textContent='無法自動複製，請手動複製下方文字';};
+      try{navigator.clipboard.writeText(text).then(ok,fail);}catch(err){fail();}return;}
+    case 'newAsk':$('#newc').hidden=false;a.hidden=true;return;
+    case 'newNo':$('#newc').hidden=true;$('[data-act="newAsk"]').hidden=false;return;
+    case 'newYes':E=newEv();break;
+    default:return;
+  }
+  save();render();
+});
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.matches('[data-c]'))E.c[t.dataset.c]=t.checked;
+  else if(t.matches('[data-mac]'))E.mac[t.dataset.mac]=t.checked;
+  else if(t.matches('[data-pick]'))E.pick[t.dataset.pick]=t.value;
+  else if(t.matches('[data-sel]'))E.v[t.dataset.sel]=t.value;
+  else return;
+  save();render();});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.matches('[data-v]')){E.v[t.dataset.v]=t.value;save();render();}
+  else if(t.matches('[data-note]')){E.note=t.value;save();}});
+render();
+})();
+</script>
+</body>
+</html>
